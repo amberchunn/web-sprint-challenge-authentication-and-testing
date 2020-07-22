@@ -1,43 +1,74 @@
-const express = require('express');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('../database/dbConfig');
-const jokesters = require('./auth-model');
-const authenticate = require('../auth/authenticate-middleware.js');
+const jwt = require("jsonwebtoken");
+const db = require("../database/dbConfig");
+const Users = require("./auth-model");
+const authenticate = require("./authenticate-middleware");
 
 const router = require('express').Router();
 
 const errorMsg = "Non!"
 
-router.get('/', (req, res, next) => {
-  res.status(200).json({message: 'Working...'});
-})
-
 router.post("/register", async (req, res, next) => {
   // implement registration
 
-	try {
+  try {
+	const { username, password } = req.body
+	const user = await Users.findBy({ username }).first()
 
-    const {username} = req.body;
+	if (user) {
+		return res.status(409).json({
+			message: "Username is already taken",
+		})
+	}
 
-    const user = await jokesters.findBy(username)
+	const newUser = await Users.add({
+		username,
+		password: await bcrypt.hash(password, 10),
+	})
 
-    if (user) {
-      return res.status(409).json({message: 'Username already exists'});
-    }
-
-    res.status(201).json(await jokesters.add(req.body));
-
+	res.status(201).json(newUser)
 	} catch(err) {
 		next(err);
 	}
-});
+})
 
-router.post('/login', authenticate, async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
       // implement login
 
-    try {
+	  try {
+		const { username, password } = req.body
 
+		console.log('begining')
+
+		const user = await Users.findBy({ username }).first()
+
+		console.log(user)
+
+
+		if (!user) {
+			return res.status(401).json({
+				message: errorMsg,
+			})
+		}
+
+		const passwordValid = await bcrypt.compare(password, user.password)
+
+		if (!passwordValid) {
+			return res.status(401).json({
+				message: errorMsg,
+			})
+		}
+
+		const payload = {
+			userId: user.id,
+			username: user.username,
+		}
+
+		res.cookie("token", jwt.sign(payload, process.env.JWT_SECRET))
+
+		res.json({
+			message: `Welcome ${user.username}!`,
+		})
 
     } catch(err) {
         next(err);
