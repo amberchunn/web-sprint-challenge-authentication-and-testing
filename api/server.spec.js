@@ -2,18 +2,18 @@ const request = require('supertest');
 const db = require("../database/dbConfig")
 const server = require('./server.js');
 
-beforeEach(async () => {
-	await db.seed.run()
-})
-afterAll(async () => {
-	await db.destroy()
-})
+// beforeEach(async () => {
+// 	await db.seed.run()
+// })
+// afterAll(async () => {
+// 	await db.destroy()
+// })
 
 describe("root route", () => {
 	it("GET /api", async () => {
 		const res = await request(server).get("/")
 		expect(res.statusCode).toBe(404)
-		expect(res.headers["content-type"]).toBe("application/json; charset=utf-8")
+		expect(res.headers["content-type"]).toBe("text/html; charset=utf-8")
 	})
 })
 
@@ -21,12 +21,12 @@ describe("login route", () => {
 	it("GET /api/login", async () => {
 		const res = await request(server).get("/")
 		expect(res.statusCode).toBe(404)
-		expect(res.headers["content-type"]).toBe("application/json; charset=utf-8")
+		expect(res.headers["content-type"]).toBe("text/html; charset=utf-8")
 	})
 	it("POST /api/login", async () => {
 		const res = await request(server)
 			.post("/api/login")
-			.send({ name: "mochi", password: "abc123" })
+			.send({ name: "elle", password: "abc123" })
 		expect(res.statusCode).toBe(201)
 		expect(res.headers["content-type"]).toBe("application/json; charset=utf-8")
 		expect(res.headers.authorization).toBeDefined()
